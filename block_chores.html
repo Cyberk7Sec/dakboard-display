@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chores Arena</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600&family=JetBrains+Mono:wght@300;400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#161e1a;--gold:#C5A059;--gold-d:rgba(197,160,89,0.45);--gold-x:rgba(197,160,89,0.14);
+  --cream:#E8DFC8;--cream-d:rgba(232,223,200,0.5);--cream-x:rgba(232,223,200,0.2);--cream-xx:rgba(232,223,200,0.08);
+  --sage:#6a9e82;--blue:#7BAFD4;--red:rgba(210,90,90,0.8);
+  --kat:#C5A059;--nejaun:#7BAFD4;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100vw;height:100vh;background:var(--bg);overflow:hidden;font-family:'DM Sans',sans-serif;font-weight:300;}
+
+.wrap{width:100%;height:100%;display:flex;flex-direction:column;gap:13px;padding:16px 18px;border:0.5px solid rgba(197,160,89,0.15);border-radius:8px;position:relative;overflow:hidden;background:rgba(255,255,255,0.02);}
+.wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:rgba(197,160,89,0.15);}
+
+/* header */
+.arena-hdr{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.arena-title{font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold-d);}
+.day-reset{font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--cream-x);letter-spacing:0.06em;}
+
+/* scoreboard */
+.scoreboard{display:grid;grid-template-columns:1fr 0.5px 1fr;gap:0;flex-shrink:0;}
+.player{display:flex;flex-direction:column;align-items:center;gap:9px;padding:12px 10px;}
+.player-name{font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:0.14em;text-transform:uppercase;}
+.player-pts{font-family:'Playfair Display',serif;font-size:42px;font-weight:600;line-height:1;letter-spacing:-1px;}
+.player-label{font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:0.1em;text-transform:uppercase;color:var(--cream-x);}
+.divider-v{background:rgba(197,160,89,0.15);}
+.crown{font-size:18px;margin-bottom:2px;opacity:0;transition:opacity 0.5s;}
+.crown.show{opacity:1;}
+
+/* progress bars */
+.progress-section{display:grid;grid-template-columns:1fr 1fr;gap:13px;flex-shrink:0;}
+.prog-block{display:flex;flex-direction:column;gap:13px;}
+.prog-label{font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:0.1em;text-transform:uppercase;display:flex;justify-content:space-between;}
+.prog-bg{height:5px;background:var(--cream-xx);border-radius:3px;overflow:hidden;}
+.prog-fill{height:100%;border-radius:2px;transition:width 0.8s ease;}
+
+.gl{height:0.5px;background:rgba(197,160,89,0.12);flex-shrink:0;}
+
+/* chore columns */
+.chore-arena{display:grid;grid-template-columns:1fr 1fr;gap:13px;flex:1;overflow:hidden;}
+.chore-col{display:flex;flex-direction:column;gap:9px;overflow:hidden;}
+.col-hdr{font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:0.14em;text-transform:uppercase;padding-bottom:4px;border-bottom:0.5px solid rgba(197,160,89,0.12);}
+.chore-item{display:flex;align-items:center;gap:11px;font-size:17px;padding:3px 0;border-bottom:0.5px solid var(--cream-xx);color:var(--cream-d);}
+.chore-item:last-child{border:none;}
+.chore-item.done{color:var(--cream-x);text-decoration:line-through;}
+.chk{width:15px;height:15px;border-radius:50%;border:0.5px solid;flex-shrink:0;}
+.chk.done{display:flex;align-items:center;justify-content:center;font-size:18px;}
+
+/* winner banner */
+.winner-banner{background:rgba(197,160,89,0.1);border:0.5px solid rgba(197,160,89,0.3);border-radius:6px;padding:5px 10px;text-align:center;font-family:'Playfair Display',serif;font-style:italic;font-size:17px;color:var(--gold);display:none;flex-shrink:0;}
+.winner-banner.show{display:block;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="arena-hdr">
+    <div class="arena-title">⚔ &nbsp;C H O R E S &nbsp; A R E N A</div>
+    <div class="day-reset" id="day-label">resets daily</div>
+  </div>
+
+  <!-- SCOREBOARD -->
+  <div class="scoreboard">
+    <div class="player">
+      <div class="crown" id="kat-crown">👑</div>
+      <div class="player-name" style="color:var(--kat);">Kat</div>
+      <div class="player-pts" style="color:var(--kat);" id="kat-pts">0</div>
+      <div class="player-label">pts today</div>
+    </div>
+    <div class="divider-v"></div>
+    <div class="player">
+      <div class="crown" id="nejaun-crown">👑</div>
+      <div class="player-name" style="color:var(--nejaun);">Nejaun</div>
+      <div class="player-pts" style="color:var(--nejaun);" id="nejaun-pts">0</div>
+      <div class="player-label">pts today</div>
+    </div>
+  </div>
+
+  <!-- PROGRESS BARS -->
+  <div class="progress-section">
+    <div class="prog-block">
+      <div class="prog-label" style="color:var(--kat);">
+        <span>Kat</span><span id="kat-prog-label">0/0</span>
+      </div>
+      <div class="prog-bg">
+        <div class="prog-fill" id="kat-bar" style="width:0%;background:var(--kat);"></div>
+      </div>
+    </div>
+    <div class="prog-block">
+      <div class="prog-label" style="color:var(--nejaun);">
+        <span>Nejaun</span><span id="nejaun-prog-label">0/0</span>
+      </div>
+      <div class="prog-bg">
+        <div class="prog-fill" id="nejaun-bar" style="width:0%;background:var(--nejaun);"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gl"></div>
+
+  <!-- CHORE COLUMNS -->
+  <div class="chore-arena">
+    <div class="chore-col">
+      <div class="col-hdr" style="color:var(--kat);">Kat's Tasks</div>
+      <div id="kat-chores">
+        <div class="chore-item"><div class="chk" style="border-color:rgba(197,160,89,0.4);"></div>Kitchen reset</div>
+        <div class="chore-item"><div class="chk" style="border-color:rgba(197,160,89,0.4);"></div>Wipe counters</div>
+        <div class="chore-item done"><div class="chk done" style="background:rgba(197,160,89,0.2);border-color:var(--kat);color:var(--kat);">✓</div>Dishes</div>
+        <div class="chore-item"><div class="chk" style="border-color:rgba(197,160,89,0.4);"></div>Living room</div>
+      </div>
+    </div>
+    <div class="chore-col">
+      <div class="col-hdr" style="color:var(--nejaun);">Nejaun's Tasks</div>
+      <div id="nejaun-chores">
+        <div class="chore-item"><div class="chk" style="border-color:rgba(123,175,212,0.4);"></div>Take out trash</div>
+        <div class="chore-item"><div class="chk" style="border-color:rgba(123,175,212,0.4);"></div>Vacuum</div>
+        <div class="chore-item"><div class="chk" style="border-color:rgba(123,175,212,0.4);"></div>Bathroom</div>
+        <div class="chore-item done"><div class="chk done" style="background:rgba(123,175,212,0.2);border-color:var(--nejaun);color:var(--nejaun);">✓</div>Laundry</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WINNER BANNER -->
+  <div class="winner-banner" id="winner-banner">🏆 Today's Champion: —</div>
+
+</div>
+
+<script>
+const SHEET_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
+
+// Set today's date
+const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+document.getElementById('day-label').textContent = days[new Date().getDay()];
+
+function updateScores(katDone, katTotal, nejaunDone, nejaunTotal) {
+  // Points
+  document.getElementById('kat-pts').textContent = katDone;
+  document.getElementById('nejaun-pts').textContent = nejaunDone;
+
+  // Progress bars
+  const katPct = katTotal ? Math.round((katDone/katTotal)*100) : 0;
+  const nejaunPct = nejaunTotal ? Math.round((nejaunDone/nejaunTotal)*100) : 0;
+  document.getElementById('kat-bar').style.width = katPct + '%';
+  document.getElementById('nejaun-bar').style.width = nejaunPct + '%';
+  document.getElementById('kat-prog-label').textContent = `${katDone}/${katTotal}`;
+  document.getElementById('nejaun-prog-label').textContent = `${nejaunDone}/${nejaunTotal}`;
+
+  // Crown
+  document.getElementById('kat-crown').classList.toggle('show', katDone > nejaunDone);
+  document.getElementById('nejaun-crown').classList.toggle('show', nejaunDone > katDone);
+
+  // Winner banner
+  const banner = document.getElementById('winner-banner');
+  if(katDone > 0 || nejaunDone > 0) {
+    const winner = katDone > nejaunDone ? 'Kat 🥇' : nejaunDone > katDone ? 'Nejaun 🥇' : 'Tie Game 🤝';
+    banner.textContent = `🏆 Leading: ${winner}`;
+    banner.classList.add('show');
+  }
+}
+
+function fetchData() {
+  if(SHEET_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+    // Demo scores
+    updateScores(1, 4, 1, 4);
+    return;
+  }
+  fetch(SHEET_URL).then(r=>r.json()).then(data => {
+    if(data.CHORES) {
+      const katDone   = parseInt(data.CHORES.kat_done)    || 0;
+      const katTotal  = parseInt(data.CHORES.kat_total)   || 0;
+      const nejDone   = parseInt(data.CHORES.nejaun_done) || 0;
+      const nejTotal  = parseInt(data.CHORES.nejaun_total)|| 0;
+      updateScores(katDone, katTotal, nejDone, nejTotal);
+    }
+  }).catch(()=>{});
+}
+fetchData();
+setInterval(fetchData, 30000);
+</script>
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Menu Display</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@300;400&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#161e1a;--gold:#C5A059;--gold-d:rgba(197,160,89,0.45);
+  --cream:#E8DFC8;--cream-d:rgba(232,223,200,0.5);--cream-x:rgba(232,223,200,0.22);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100vw;height:100vh;background:var(--bg);overflow:hidden;font-family:'DM Sans',sans-serif;}
+
+.wrap{width:100%;height:100%;position:relative;border-radius:8px;overflow:hidden;border:0.5px solid rgba(197,160,89,0.16);}
+
+/* meal period header */
+.period-bar{position:absolute;top:0;left:0;right:0;z-index:10;padding:13px 18px;display:flex;justify-content:space-between;align-items:center;background:linear-gradient(to bottom,rgba(22,30,26,0.9) 0%,transparent 100%);}
+.period-name{font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold-d);}
+.period-time{font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--cream-x);letter-spacing:0.08em;}
+
+/* slides */
+.slideshow{width:100%;height:100%;position:relative;}
+.slide{position:absolute;inset:0;opacity:0;transition:opacity 1s ease;display:flex;flex-direction:column;}
+.slide.active{opacity:1;z-index:1;}
+
+/* image area */
+.img-area{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+.img-area::after{content:'';position:absolute;inset:0;background:linear-gradient(to bottom,transparent 40%,rgba(16,24,20,0.95) 100%);}
+.placeholder{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;position:relative;z-index:0;}
+.placeholder svg{width:32px;height:32px;opacity:0.2;}
+.placeholder span{font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:0.12em;text-transform:uppercase;opacity:0.2;}
+
+/* info bar */
+.info{position:absolute;bottom:0;left:0;right:0;z-index:2;padding:14px 16px 14px;display:flex;flex-direction:column;gap:13px;}
+.meal-category{font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:0.16em;text-transform:uppercase;}
+.meal-name{font-family:'Playfair Display',serif;font-size:clamp(20px,2.2vw,26px);font-weight:600;color:var(--cream);line-height:1.25;}
+.meal-desc{font-family:'Playfair Display',serif;font-style:italic;font-size:15px;color:var(--cream-x);line-height:1.3;}
+.meal-tags{display:flex;gap:9px;flex-wrap:wrap;margin-top:2px;}
+.tag{font-family:'JetBrains Mono',monospace;font-size:17px;letter-spacing:0.08em;text-transform:uppercase;padding:2px 6px;border-radius:8px;border:0.5px solid rgba(197,160,89,0.25);background:rgba(197,160,89,0.08);color:var(--gold-d);}
+
+/* dots */
+.dots{position:absolute;bottom:6px;right:10px;display:flex;gap:13px;z-index:10;}
+.dot{width:5px;height:5px;border-radius:50%;background:rgba(197,160,89,0.2);transition:background 0.3s;}
+.dot.on{background:var(--gold);}
+
+/* empty state */
+.empty-state{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;}
+.empty-state p{font-family:'JetBrains Mono',monospace;font-size:20px;letter-spacing:0.12em;text-transform:uppercase;color:var(--cream-x);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="period-bar">
+    <div class="period-name" id="period-name">Menu</div>
+    <div class="period-time" id="period-time"></div>
+  </div>
+  <div class="slideshow" id="ss"></div>
+  <div class="dots" id="dots"></div>
+</div>
+
+<script>
+const SHEET_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
+
+// Meal periods by hour
+const PERIODS = [
+  { name:'B R E A K F A S T', key:'BREAKFAST', start:5,  end:11 },
+  { name:'L U N C H',         key:'LUNCH',     start:11, end:14 },
+  { name:'S N A C K',         key:'SNACK',     start:14, end:17 },
+  { name:'D I N N E R',       key:'DINNER',    start:17, end:21 },
+  { name:'M O O C H I E S',   key:'MOOCHIES',  start:21, end:24 },
+];
+
+// Color per period
+const COLORS = {
+  BREAKFAST: { bg:'#1a1610', accent:'#c9813a', grad:'rgba(42,31,14,0.4)' },
+  LUNCH:     { bg:'#0e1814', accent:'#7ab99a', grad:'rgba(16,32,22,0.4)' },
+  SNACK:     { bg:'#101614', accent:'#6a9e82', grad:'rgba(14,28,20,0.4)' },
+  DINNER:    { bg:'#0e1a14', accent:'#5fa882', grad:'rgba(17,35,22,0.4)' },
+  MOOCHIES:  { bg:'#140e1a', accent:'#9b6db5', grad:'rgba(30,14,38,0.4)' },
+};
+
+// Demo data
+const DEMO = {
+  BREAKFAST: [
+    { name:'Sourdough & Eggs', desc:'roasted vegetables · matcha', tags:['homemade','veg'] },
+    { name:'Overnight Oats', desc:'coconut milk · banana · honey', tags:['meal prep','veg'] },
+    { name:'Pancakes', desc:'blueberry · maple syrup · butter', tags:['weekend fave'] },
+    { name:'Oatmeal Porridge', desc:'cinnamon · brown sugar · fruits', tags:['cozy','quick'] },
+  ],
+  LUNCH: [
+    { name:'Avocado Toast', desc:'poached egg · chili flakes · lemon', tags:['light','quick'] },
+    { name:'Protein Bowl', desc:'quinoa · grilled chicken · greens', tags:['high protein'] },
+  ],
+  SNACK: [
+    { name:'Protein Smoothie', desc:'banana · protein powder · almond milk', tags:['post workout'] },
+    { name:'Banana Bread', desc:'homemade · walnuts · honey', tags:['homemade','sweet'] },
+    { name:'Fruit & Cheesecake', desc:'seasonal fruit · mini cheesecake', tags:['treat'] },
+  ],
+  DINNER: [
+    { name:'Lomo Saltado', desc:'peruvian stir fry · aji amarillo · rice', tags:['peruvian','fusion'] },
+    { name:'Jerk Chicken Stew', desc:'scotch bonnet · coconut milk · plantains', tags:['jamaican','bold'] },
+    { name:'Asian Stir Fry', desc:'coconut rice · sesame · ginger · bok choy', tags:['asian','quick'] },
+  ],
+  MOOCHIES: [
+    { name:'Ninja Creami', desc:'protein ice cream · homemade', tags:['dessert','ninja creami'] },
+    { name:'Cheesecake Slice', desc:'homemade · berry compote', tags:['sweet','treat'] },
+    { name:'Coconut Water Pops', desc:'frozen coconut water · mango', tags:['light','refreshing'] },
+  ],
+};
+
+let current = 0;
+let slides = [];
+let timer = null;
+
+function getCurrentPeriod() {
+  const h = new Date().getHours();
+  return PERIODS.find(p => h >= p.start && h < p.end) || PERIODS[3];
+}
+
+function buildSlides(items, period) {
+  const ss = document.getElementById('ss');
+  const dots = document.getElementById('dots');
+  ss.innerHTML = '';
+  dots.innerHTML = '';
+  slides = [];
+
+  if(!items || !items.length) {
+    ss.innerHTML = `<div class="empty-state"><p>Nothing here yet</p></div>`;
+    return;
+  }
+
+  const color = COLORS[period.key] || COLORS.DINNER;
+
+  items.forEach((item, i) => {
+    const s = document.createElement('div');
+    s.className = 'slide' + (i === 0 ? ' active' : '');
+    s.style.background = `linear-gradient(135deg, ${color.grad} 0%, ${color.bg} 100%)`;
+    s.innerHTML = `
+      <div class="img-area" style="background:${color.bg};">
+        <div class="placeholder" style="background:${color.grad};">
+          <svg viewBox="0 0 24 24" fill="none" stroke="${color.accent}" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+          <span style="color:${color.accent};">add photo</span>
+        </div>
+      </div>
+      <div class="info">
+        <div class="meal-category" style="color:${color.accent};">${period.name}</div>
+        <div class="meal-name">${item.name}</div>
+        ${item.desc ? `<div class="meal-desc">${item.desc}</div>` : ''}
+        <div class="meal-tags">${(item.tags||[]).map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+      </div>`;
+    ss.appendChild(s);
+    slides.push(s);
+
+    const d = document.createElement('div');
+    d.className = 'dot' + (i === 0 ? ' on' : '');
+    dots.appendChild(d);
+  });
+}
+
+function goTo(n) {
+  const dotEls = document.querySelectorAll('.dot');
+  slides[current].classList.remove('active');
+  if(dotEls[current]) dotEls[current].classList.remove('on');
+  current = (n + slides.length) % slides.length;
+  slides[current].classList.add('active');
+  if(dotEls[current]) dotEls[current].classList.add('on');
+}
+
+function startRotation() {
+  if(timer) clearInterval(timer);
+  timer = setInterval(() => { if(slides.length > 1) goTo(current + 1); }, 6000);
+}
+
+function updatePeriodBar() {
+  const p = getCurrentPeriod();
+  const now = new Date();
+  const timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  document.getElementById('period-name').textContent = p.name;
+  document.getElementById('period-time').textContent = timeStr;
+}
+
+function init(data) {
+  const period = getCurrentPeriod();
+  let items = [];
+  if(data && data[period.key]) {
+    items = Object.values(data[period.key]).filter(v => v && typeof v === 'object' && v.name);
+  } else if(SHEET_URL === 'YOUR_APPS_SCRIPT_URL_HERE') {
+    items = DEMO[period.key] || [];
+  }
+  current = 0;
+  buildSlides(items, period);
+  updatePeriodBar();
+  startRotation();
+}
+
+function fetchData() {
+  if(SHEET_URL === 'YOUR_APPS_SCRIPT_URL_HERE') { init(null); return; }
+  fetch(SHEET_URL).then(r=>r.json()).then(data => init(data)).catch(()=>init(null));
+}
+
+fetchData();
+setInterval(updatePeriodBar, 60000);
+// Reload period every hour
+setInterval(fetchData, 3600000);
+</script>
+</body>
+</html>
