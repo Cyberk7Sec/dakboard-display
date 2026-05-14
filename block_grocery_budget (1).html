@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grocery Budget</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#161e1a;--gold:#C5A059;--gold-d:rgba(197,160,89,0.45);--gold-x:rgba(197,160,89,0.12);
+  --cream:#E8DFC8;--cream-d:rgba(232,223,200,0.55);--cream-x:rgba(232,223,200,0.22);--cream-xx:rgba(232,223,200,0.08);
+  --green:#5fa882;--green-x:rgba(95,168,130,0.12);--warn:#c87878;--warn-x:rgba(200,120,120,0.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100vw;height:100vh;background:var(--bg);overflow:hidden;font-family:'JetBrains Mono',monospace;}
+.wrap{width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:11px 13px;gap:7px;border:0.5px solid rgba(197,160,89,0.18);border-radius:8px;position:relative;overflow:hidden;transition:background 1s,border-color 1s;}
+.wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:rgba(197,160,89,0.2);}
+.wrap.better{background:linear-gradient(135deg,rgba(95,168,130,0.1) 0%,rgba(22,30,26,0) 100%);border-color:rgba(95,168,130,0.3);}
+.wrap.worse{background:linear-gradient(135deg,rgba(200,120,120,0.08) 0%,rgba(22,30,26,0) 100%);border-color:rgba(200,120,120,0.22);}
+.wrap.neutral{background:linear-gradient(135deg,rgba(197,160,89,0.07) 0%,rgba(22,30,26,0) 100%);}
+.lbl{font-size:7px;letter-spacing:0.22em;text-transform:uppercase;color:var(--gold-d);flex-shrink:0;}
+.week-top{display:flex;justify-content:space-between;align-items:baseline;}
+.week-spent{font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--cream);line-height:1;letter-spacing:-0.5px;}
+.week-pct{font-size:11px;color:var(--gold);}
+.week-limit{font-size:8px;color:var(--cream-x);letter-spacing:0.06em;margin-top:1px;}
+.bar-wrap{position:relative;margin-top:5px;}
+.bar-bg{height:4px;background:var(--cream-xx);border-radius:2px;overflow:visible;position:relative;}
+.bar-fill{height:100%;border-radius:2px;transition:width 1s ease;}
+.bar-fill.good{background:var(--gold);}
+.bar-fill.better{background:var(--green);}
+.bar-fill.warn{background:var(--warn);}
+.bar-marker{position:absolute;top:-3px;width:1.5px;height:10px;background:rgba(232,223,200,0.25);border-radius:1px;display:none;}
+.remain{font-size:9px;letter-spacing:0.08em;text-transform:uppercase;margin-top:3px;}
+.remain.good{color:var(--gold-d);}
+.remain.better{color:var(--green);}
+.remain.warn{color:var(--warn);}
+.gl{height:0.5px;background:rgba(197,160,89,0.12);}
+.vs-lbl{font-size:7px;letter-spacing:0.16em;text-transform:uppercase;color:var(--cream-x);}
+.vs-row{display:flex;justify-content:space-between;align-items:center;margin-top:3px;}
+.vs-amount{font-size:10px;color:var(--cream-d);}
+.badge{font-size:7px;letter-spacing:0.08em;text-transform:uppercase;padding:2px 7px;border-radius:10px;border:0.5px solid;}
+.badge.better{background:var(--green-x);color:var(--green);border-color:rgba(95,168,130,0.3);}
+.badge.worse{background:var(--warn-x);color:var(--warn);border-color:rgba(200,120,120,0.25);}
+.badge.same{background:var(--gold-x);color:var(--gold);border-color:rgba(197,160,89,0.25);}
+.vs-diff{font-family:'Playfair Display',serif;font-size:10px;margin-top:2px;}
+.vs-diff.better{color:var(--green);}
+.vs-diff.worse{color:var(--warn);}
+.vs-diff.same{color:var(--cream-x);}
+</style>
+</head>
+<body>
+<div class="wrap neutral" id="wrap">
+  <div class="lbl">G R O C E R Y &nbsp; B U D G E T</div>
+  <div>
+    <div class="week-top">
+      <div class="week-spent" id="spent">$500</div>
+      <div class="week-pct" id="pct">50%</div>
+    </div>
+    <div class="week-limit" id="limit-lbl">of $1,000 weekly budget</div>
+    <div class="bar-wrap">
+      <div class="bar-bg">
+        <div class="bar-fill good" id="bar" style="width:50%;"></div>
+      </div>
+      <div class="bar-marker" id="marker"></div>
+    </div>
+    <div class="remain good" id="remain">$500 remaining</div>
+  </div>
+  <div class="gl"></div>
+  <div>
+    <div class="vs-lbl">vs same week last month</div>
+    <div class="vs-row">
+      <div class="vs-amount" id="last-amt">Last month: —</div>
+      <div class="badge same" id="badge">on track</div>
+    </div>
+    <div class="vs-diff same" id="vs-diff">add last month to compare</div>
+  </div>
+</div>
+<script>
+const SHEET_URL='YOUR_APPS_SCRIPT_URL_HERE';
+function update(spent,limit,last){
+  const pct=Math.round((spent/limit)*100);
+  const rem=limit-spent;
+  const better=last>0&&spent<last;
+  const worse=last>0&&spent>last;
+  const diff=last>0?Math.abs(spent-last):0;
+  const isWarn=pct>=85;
+  document.getElementById('spent').textContent='$'+spent.toLocaleString();
+  document.getElementById('pct').textContent=pct+'%';
+  document.getElementById('limit-lbl').textContent='of $'+limit.toLocaleString()+' weekly budget';
+  document.getElementById('remain').textContent=rem>=0?'$'+rem.toLocaleString()+' remaining':'$'+Math.abs(rem).toLocaleString()+' over budget';
+  document.getElementById('remain').className='remain '+(isWarn?'warn':better?'better':'good');
+  const bar=document.getElementById('bar');
+  bar.style.width=Math.min(pct,100)+'%';
+  bar.className='bar-fill '+(isWarn?'warn':better?'better':'good');
+  document.getElementById('wrap').className='wrap '+(better?'better':isWarn?'worse':'neutral');
+  if(last>0){
+    const lp=Math.min(Math.round((last/limit)*100),100);
+    const m=document.getElementById('marker');
+    m.style.left=lp+'%';m.style.display='block';
+    document.getElementById('last-amt').textContent='Last month: $'+last.toLocaleString();
+    const badge=document.getElementById('badge');
+    const diff_el=document.getElementById('vs-diff');
+    if(better){badge.textContent='↓ saving more';badge.className='badge better';diff_el.textContent='$'+diff.toLocaleString()+' less than last month';diff_el.className='vs-diff better';}
+    else if(worse){badge.textContent='↑ spending more';badge.className='badge worse';diff_el.textContent='$'+diff.toLocaleString()+' more than last month';diff_el.className='vs-diff worse';}
+    else{badge.textContent='on track';badge.className='badge same';diff_el.textContent='same pace as last month';diff_el.className='vs-diff same';}
+  }
+}
+function fetchData(){
+  if(SHEET_URL==='YOUR_APPS_SCRIPT_URL_HERE'){update(500,1000,620);return;}
+  fetch(SHEET_URL).then(r=>r.json()).then(data=>{
+    if(data.BUDGET)update(parseFloat(data.BUDGET.spent)||0,parseFloat(data.BUDGET.limit)||1000,parseFloat(data.BUDGET.last_month)||0);
+  }).catch(()=>{});
+}
+fetchData();setInterval(fetchData,60000);
+</script>
+</body>
+</html>
