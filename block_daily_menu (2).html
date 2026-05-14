@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Menu</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#161e1a;
+  --gold:#C5A059;--gold-d:rgba(197,160,89,0.5);--gold-x:rgba(197,160,89,0.15);
+  --cream:#E8DFC8;--cream-d:rgba(232,223,200,0.6);--cream-x:rgba(232,223,200,0.25);--cream-xx:rgba(232,223,200,0.07);
+  --b:#c9813a;--l:#7ab99a;--s:#9b6db5;--d:#5fa882;--m:#8aabb8;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100vw;height:100vh;background:var(--bg);overflow:hidden;}
+
+.card{
+  width:100%;height:100%;
+  display:flex;
+  position:relative;
+  overflow:hidden;
+  border:0.5px solid rgba(197,160,89,0.18);
+  border-radius:8px;
+  background:linear-gradient(160deg,rgba(30,50,38,0.35) 0%,rgba(22,30,26,0.1) 100%);
+}
+
+/* vertical gold line — the menu card divider */
+.line{
+  width:1px;
+  background:linear-gradient(to bottom,transparent 0%,rgba(197,160,89,0.4) 15%,rgba(197,160,89,0.4) 85%,transparent 100%);
+  margin:16px 0;
+  flex-shrink:0;
+  margin-left:22px;
+}
+
+/* main content */
+.content{
+  flex:1;
+  display:flex;flex-direction:column;
+  padding:14px 16px 12px 14px;
+  gap:0;
+  overflow:hidden;
+}
+
+/* header */
+.menu-header{
+  text-align:center;
+  padding-bottom:10px;
+  border-bottom:0.5px solid rgba(197,160,89,0.15);
+  margin-bottom:8px;
+  flex-shrink:0;
+}
+.menu-title{
+  font-family:'Cormorant Garamond',serif;
+  font-style:italic;
+  font-size:22px;
+  font-weight:300;
+  color:var(--gold);
+  line-height:1;
+  letter-spacing:0.02em;
+}
+.menu-date{
+  font-family:'JetBrains Mono',monospace;
+  font-size:6px;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:var(--cream-x);
+  margin-top:4px;
+}
+
+/* meal sections */
+.meals{
+  display:flex;flex-direction:column;
+  flex:1;justify-content:space-evenly;
+  overflow:hidden;
+}
+
+.meal-section{
+  display:flex;flex-direction:column;gap:1px;
+  padding:4px 0;
+  border-bottom:0.5px solid var(--cream-xx);
+  animation:fadeUp 0.5s ease both;
+}
+.meal-section:last-child{border:none;}
+
+.meal-cat{
+  font-family:'JetBrains Mono',monospace;
+  font-size:7px;letter-spacing:0.2em;
+  text-transform:uppercase;
+  line-height:1;
+}
+.meal-name{
+  font-family:'Cormorant Garamond',serif;
+  font-size:15px;
+  font-weight:400;
+  color:var(--cream-d);
+  line-height:1.25;
+  padding-left:1px;
+}
+.meal-name.empty{
+  font-style:italic;
+  color:var(--cream-x);
+  font-size:12px;
+}
+
+/* active highlight */
+.meal-section.active{
+  background:rgba(197,160,89,0.04);
+  border-radius:4px;
+  padding-left:6px;
+  margin-left:-6px;
+}
+.meal-section.active .meal-name{color:var(--cream);}
+
+/* colors */
+.b .meal-cat{color:var(--b);}
+.l .meal-cat{color:var(--l);}
+.s .meal-cat{color:var(--s);}
+.d .meal-cat{color:var(--d);}
+.m .meal-cat{color:var(--m);}
+
+/* left rotated label */
+.side-label{
+  position:absolute;
+  left:4px;top:50%;
+  transform:translateY(-50%) rotate(-90deg);
+  font-family:'JetBrains Mono',monospace;
+  font-size:6px;letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:rgba(197,160,89,0.2);
+  white-space:nowrap;
+  transform-origin:center center;
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div class="side-label">Kat & Nejaun · Daily Menu</div>
+  <div class="line"></div>
+
+  <div class="content">
+    <div class="menu-header">
+      <div class="menu-title">the Menu</div>
+      <div class="menu-date" id="menu-date">Thursday · May 14</div>
+    </div>
+
+    <div class="meals">
+
+      <div class="meal-section b" style="animation-delay:0.06s">
+        <div class="meal-cat">Breakfast</div>
+        <div class="meal-name" id="meal-b">—</div>
+      </div>
+
+      <div class="meal-section l" style="animation-delay:0.12s">
+        <div class="meal-cat">Lunch</div>
+        <div class="meal-name" id="meal-l">—</div>
+      </div>
+
+      <div class="meal-section s" style="animation-delay:0.18s">
+        <div class="meal-cat">Snack</div>
+        <div class="meal-name" id="meal-s">—</div>
+      </div>
+
+      <div class="meal-section d" style="animation-delay:0.24s">
+        <div class="meal-cat">Dinner</div>
+        <div class="meal-name" id="meal-d">—</div>
+      </div>
+
+      <div class="meal-section m" style="animation-delay:0.30s">
+        <div class="meal-cat">Moochies</div>
+        <div class="meal-name" id="meal-m">—</div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbzUBKXZgJvM80pDQgJy7Lfh89k0IyZNoTWxWMHssp6cqKXI1KCWEADkcwpsekOVEnXQ/exec';
+const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const DLBLS  = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+function setDate() {
+  const n = new Date();
+  document.getElementById('menu-date').textContent = DLBLS[n.getDay()] + ' · ' + MONTHS[n.getMonth()] + ' ' + n.getDate();
+}
+
+function highlightActive() {
+  const h = new Date().getHours();
+  document.querySelectorAll('.meal-section').forEach(r => r.classList.remove('active'));
+  const map = [[5,11,'b'],[11,14,'l'],[14,17,'s'],[17,21,'d'],[21,24,'m']];
+  const cur = map.find(([s,e]) => h>=s && h<e);
+  if(cur) document.querySelector('.meal-section.'+cur[2])?.classList.add('active');
+}
+
+function setMeal(id, val) {
+  const el = document.getElementById(id);
+  if(!el) return;
+  if(val && val.trim() && val !== '—') {
+    el.textContent = val;
+    el.classList.remove('empty');
+  } else {
+    el.textContent = 'Not planned';
+    el.classList.add('empty');
+  }
+}
+
+function render(data) {
+  const today = DAYS[new Date().getDay()];
+  const prefix = today + '_';
+  const m = {};
+  if(data.MENU_DAILY) {
+    m.breakfast = data.MENU_DAILY[prefix+'Breakfast'] || data.MENU_DAILY[prefix+'breakfast'];
+    m.lunch     = data.MENU_DAILY[prefix+'Lunch']     || data.MENU_DAILY[prefix+'lunch'];
+    m.snack     = data.MENU_DAILY[prefix+'Snack']     || data.MENU_DAILY[prefix+'snack'];
+    m.dinner    = data.MENU_DAILY[prefix+'Dinner']    || data.MENU_DAILY[prefix+'dinner'];
+    m.moochies  = data.MENU_DAILY[prefix+'Moochies']  || data.MENU_DAILY[prefix+'moochies'];
+  }
+  setMeal('meal-b', m.breakfast);
+  setMeal('meal-l', m.lunch);
+  setMeal('meal-s', m.snack);
+  setMeal('meal-d', m.dinner);
+  setMeal('meal-m', m.moochies);
+}
+
+function fetchData() {
+  if(SHEET_URL === 'https://script.google.com/macros/s/AKfycbzUBKXZgJvM80pDQgJy7Lfh89k0IyZNoTWxWMHssp6cqKXI1KCWEADkcwpsekOVEnXQ/exec') {
+    render({ MENU_DAILY: { thursday: {
+      breakfast: 'Sourdough & Eggs',
+      lunch:     'Avocado Toast',
+      snack:     'Protein Smoothie',
+      dinner:    'Jerk Chicken Stew',
+      moochies:  'Ninja Creami'
+    }}});
+    return;
+  }
+  fetch(SHEET_URL).then(r=>r.json()).then(render).catch(()=>{});
+}
+
+setDate();
+highlightActive();
+fetchData();
+setInterval(highlightActive, 60000);
+setInterval(fetchData, 60000);
+</script>
+</body>
+</html>
